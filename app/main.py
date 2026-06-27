@@ -1,38 +1,36 @@
-from app.api.routes import router
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-# -------------------------------
-# Create FastAPI Application
-# -------------------------------
+from fastapi.responses import HTMLResponse
+from fastapi import Request
+from pydantic import BaseModel
 
 app = FastAPI(
     title="ProductPulse AI",
-    description="AI Powered Product Review Comparison Platform",
-    version="1.0.0"
+    version="1.0"
 )
 
-# -------------------------------
-# Mount Static Folder
-# -------------------------------
+# Static Files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static"
-)
-
-# -------------------------------
-# Configure Templates
-# -------------------------------
-
+# Templates
 templates = Jinja2Templates(directory="app/templates")
 
-# -------------------------------
-# Home Route
-# -------------------------------
+
+# -------------------------
+# Request Model
+# -------------------------
+
+class CompareRequest(BaseModel):
+
+    app1_url: str
+
+    app2_url: str
+
+
+# -------------------------
+# Home
+# -------------------------
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -43,16 +41,54 @@ async def home(request: Request):
         context={}
     )
 
-# -------------------------------
-# Health Check Route
-# -------------------------------
+
+# -------------------------
+# Health
+# -------------------------
 
 @app.get("/health")
 async def health():
 
     return {
-        "status": "success",
-        "message": "Backend Running Successfully 🚀"
+        "status": "Backend Running"
     }
 
-app.include_router(router)
+
+# -------------------------
+# Compare Apps
+# -------------------------
+
+@app.post("/compare")
+async def compare_apps(data: CompareRequest):
+
+    print("App 1")
+
+    print(data.app1_url)
+
+    print("App 2")
+
+    print(data.app2_url)
+
+    return {
+
+        "status": "success",
+
+        "message": "Backend Connected Successfully",
+
+        "app1": {
+
+            "name": "Spotify",
+
+            "sentiment": 82
+
+        },
+
+        "app2": {
+
+            "name": "Apple Music",
+
+            "sentiment": 74
+
+        }
+
+    }
