@@ -1,3 +1,4 @@
+from app.api.routes import router
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -53,3 +54,5 @@ async def health():
         "status": "success",
         "message": "Backend Running Successfully 🚀"
     }
+
+app.include_router(router)
