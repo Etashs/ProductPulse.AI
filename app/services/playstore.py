@@ -1,53 +1,52 @@
-from google_play_scraper import app, reviews
+import re
+
+from google_play_scraper import app
+from google_play_scraper import reviews
 
 
-def fetch_app_details(playstore_url):
+def extract_app_id(url: str):
 
-    try:
+    match = re.search(r"id=([A-Za-z0-9._]+)", url)
 
-        # Extract Package Name
+    if not match:
+        raise ValueError("Invalid Google Play URL")
 
-        package_name = playstore_url.split("id=")[1]
+    return match.group(1)
 
-    except IndexError:
 
-        raise ValueError("Invalid Google Play Store URL")
+def fetch_app_details(url: str):
 
-    # Fetch App Information
+    app_id = extract_app_id(url)
 
     app_info = app(
-        package_name,
+        app_id,
         lang="en",
-        country="in"
+        country="us"
     )
 
-    # Fetch Reviews
-
-    review_list, _ = reviews(
-        package_name,
+    result, _ = reviews(
+        app_id,
         lang="en",
-        country="in",
+        country="us",
         count=100
     )
 
-    review_text = []
+    review_list = []
 
-    for review in review_list:
+    for review in result:
 
-        review_text.append(review["content"])
+        review_list.append(review["content"])
 
     return {
 
-        "package": package_name,
-
-        "name": app_info["title"],
+        "app_name": app_info["title"],
 
         "developer": app_info["developer"],
 
         "rating": app_info["score"],
 
-        "installs": app_info["installs"],
+        "total_reviews": len(review_list),
 
-        "reviews": review_text
+        "reviews": review_list
 
     }
