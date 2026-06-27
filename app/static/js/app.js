@@ -1,145 +1,485 @@
-console.log("ProductPulse AI Loaded");
+console.log("🚀 ProductPulse AI Started");
 
-const compareButton = document.getElementById("compare-btn");
-const loadingSection = document.getElementById("loading-section");
-const resultsSection = document.getElementById("results-section");
+// =====================================
+// GLOBAL VARIABLES
+// =====================================
 
-compareButton.addEventListener("click", async () => {
+let ratingChart = null;
+let reviewChart = null;
 
-    const url1 = document.getElementById("app1-url").value.trim();
-    const url2 = document.getElementById("app2-url").value.trim();
+// =====================================
+// DOM ELEMENTS
+// =====================================
 
-    if (!url1 || !url2) {
-        alert("Please enter both Google Play Store URLs.");
-        return;
-    }
+const compareBtn = document.getElementById("compare-btn");
 
-    loadingSection.style.display = "block";
-    resultsSection.style.display = "none";
+const loading = document.getElementById("loading-section");
 
-    try {
+const results = document.getElementById("results-section");
 
-        const response = await fetch("/compare", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                url1: url1,
-                url2: url2
-            })
-        });
+const darkToggle = document.getElementById("dark-mode-toggle");
 
-        if (!response.ok) {
-            throw new Error("Backend Error");
-        }
+const backTop = document.getElementById("backToTop");
 
-        const data = await response.json();
+// =====================================
+// DARK MODE
+// =====================================
 
-        loadingSection.style.display = "none";
-        resultsSection.style.display = "block";
+darkToggle.addEventListener("click",()=>{
 
-        // ----------------------------
-        // App 1
-        // ----------------------------
+document.body.classList.toggle("dark");
 
-        document.getElementById("app1-name").innerText =
-            data.product1.name;
+if(document.body.classList.contains("dark")){
 
-        document.getElementById("app1-rating").innerText =
-            data.product1.rating.toFixed(2);
+darkToggle.innerHTML=
+'<i class="bi bi-sun-fill"></i> Light Mode';
 
-        document.getElementById("app1-reviews").innerText =
-            data.product1.reviews;
+}else{
 
-        // ----------------------------
-        // App 2
-        // ----------------------------
+darkToggle.innerHTML=
+'<i class="bi bi-moon-stars-fill"></i> Dark Mode';
 
-        document.getElementById("app2-name").innerText =
-            data.product2.name;
+}
 
-        document.getElementById("app2-rating").innerText =
-            data.product2.rating.toFixed(2);
+});
 
-        document.getElementById("app2-reviews").innerText =
-            data.product2.reviews;
+// =====================================
+// BACK TO TOP
+// =====================================
 
-        // ----------------------------
-        // Winner
-        // ----------------------------
+window.addEventListener("scroll",()=>{
 
-        document.getElementById("winner-name").innerText =
-            data.winner;
+if(window.scrollY>300){
 
-        // ----------------------------
-        // Executive Summary
-        // ----------------------------
+backTop.style.display="flex";
 
-        document.getElementById("summary").innerHTML = `
-<b>${data.product1.name}</b><br><br>
+}else{
+
+backTop.style.display="none";
+
+}
+
+});
+
+backTop.onclick=()=>{
+
+window.scrollTo({
+
+top:0,
+
+behavior:"smooth"
+
+});
+
+};
+
+// =====================================
+// COMPARE BUTTON
+// =====================================
+
+compareBtn.addEventListener("click",async()=>{
+
+const url1=document.getElementById("app1-url").value.trim();
+
+const url2=document.getElementById("app2-url").value.trim();
+
+if(!url1 || !url2){
+
+alert("Enter both URLs");
+
+return;
+
+}
+
+loading.style.display="block";
+
+results.style.display="none";
+try{
+
+const response = await fetch("/compare",{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+url1:url1,
+
+url2:url2
+
+})
+
+});
+
+if(!response.ok){
+
+throw new Error("Backend Error");
+
+}
+
+const data = await response.json();
+
+console.log(data);
+
+loading.style.display="none";
+
+results.style.display="block";
+
+// =====================================
+// APP 1
+// =====================================
+
+document.getElementById("app1-name").innerText =
+data.product1.name;
+
+document.getElementById("app1-rating").innerText =
+Number(data.product1.rating).toFixed(2);
+
+document.getElementById("app1-reviews").innerText =
+data.product1.reviews;
+
+// =====================================
+// APP 2
+// =====================================
+
+document.getElementById("app2-name").innerText =
+data.product2.name;
+
+document.getElementById("app2-rating").innerText =
+Number(data.product2.rating).toFixed(2);
+
+document.getElementById("app2-reviews").innerText =
+data.product2.reviews;
+
+// =====================================
+// WINNER
+// =====================================
+
+document.getElementById("winner-name").innerText =
+data.winner;
+
+// =====================================
+// SUMMARY
+// =====================================
+
+document.getElementById("summary").innerHTML =
+
+`<strong>${data.product1.name}</strong><br><br>
+
 ${data.product1.summary}
 
 <hr>
 
-<b>${data.product2.name}</b><br><br>
-${data.product2.summary}
-`;
+<strong>${data.product2.name}</strong><br><br>
 
-        // ----------------------------
-        // App 1 Pain Points
-        // ----------------------------
+${data.product2.summary}`;
 
-        const pain1 = document.getElementById("app1-pain");
-        pain1.innerHTML = "";
+// =====================================
+// PROGRESS BARS
+// =====================================
 
-        data.product1.pain_points.forEach(point => {
-            pain1.innerHTML += `<li>${point}</li>`;
-        });
+document.getElementById("app1-progress").style.width =
+(Number(data.product1.rating)/5*100)+"%";
 
-        // ----------------------------
-        // App 2 Pain Points
-        // ----------------------------
+document.getElementById("app2-progress").style.width =
+(Number(data.product2.rating)/5*100)+"%";
+// =====================================
+// PAIN POINTS
+// =====================================
 
-        const pain2 = document.getElementById("app2-pain");
-        pain2.innerHTML = "";
+function populateList(id, items, emoji){
 
-        data.product2.pain_points.forEach(point => {
-            pain2.innerHTML += `<li>${point}</li>`;
-        });
+    const list=document.getElementById(id);
 
-        // ----------------------------
-        // App 1 Feature Requests
-        // ----------------------------
+    list.innerHTML="";
 
-        const feature1 = document.getElementById("app1-features");
-        feature1.innerHTML = "";
+    items.forEach(item=>{
 
-        data.product1.feature_requests.forEach(feature => {
-            feature1.innerHTML += `<li>${feature}</li>`;
-        });
+        const li=document.createElement("li");
 
-        // ----------------------------
-        // App 2 Feature Requests
-        // ----------------------------
+        li.innerHTML=`${emoji} ${item}`;
 
-        const feature2 = document.getElementById("app2-features");
-        feature2.innerHTML = "";
+        list.appendChild(li);
 
-        data.product2.feature_requests.forEach(feature => {
-            feature2.innerHTML += `<li>${feature}</li>`;
-        });
+    });
 
-    }
+}
 
-    catch (error) {
+populateList(
+"app1-pain",
+data.product1.pain_points,
+"🔴"
+);
 
-        console.error(error);
+populateList(
+"app2-pain",
+data.product2.pain_points,
+"🔴"
+);
 
-        loadingSection.style.display = "none";
+populateList(
+"app1-features",
+data.product1.feature_requests,
+"🟢"
+);
 
-        alert("Unable to connect to backend.");
+populateList(
+"app2-features",
+data.product2.feature_requests,
+"🟢"
+);
 
-    }
+// =====================================
+// COPY SUMMARY
+// =====================================
+
+const copyBtn=document.getElementById("copy-summary-btn");
+
+copyBtn.onclick=async()=>{
+
+try{
+
+await navigator.clipboard.writeText(
+
+document.getElementById("summary").innerText
+
+);
+
+copyBtn.innerHTML="✅ Copied";
+
+setTimeout(()=>{
+
+copyBtn.innerHTML="📋 Copy Summary";
+
+},2000);
+
+}catch{
+
+alert("Clipboard permission denied.");
+
+}
+
+};
+
+// =====================================
+// RATING CHART
+// =====================================
+
+if(ratingChart){
+
+ratingChart.destroy();
+
+}
+
+ratingChart=new Chart(
+
+document.getElementById("ratingChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:[
+
+data.product1.name,
+
+data.product2.name
+
+],
+
+datasets:[{
+
+label:"Rating",
+
+data:[
+
+data.product1.rating,
+
+data.product2.rating
+
+],
+
+backgroundColor:[
+
+"#2563eb",
+
+"#22c55e"
+
+],
+
+borderRadius:10
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:false
+
+}
+
+},
+
+scales:{
+
+y:{
+
+beginAtZero:true,
+
+max:5
+
+}
+
+}
+
+}
+
+}
+
+);
+
+// =====================================
+// REVIEW CHART
+// =====================================
+
+if(reviewChart){
+
+reviewChart.destroy();
+
+}
+
+reviewChart=new Chart(
+
+document.getElementById("reviewChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:[
+
+data.product1.name,
+
+data.product2.name
+
+],
+
+datasets:[{
+
+label:"Reviews",
+
+data:[
+
+data.product1.reviews,
+
+data.product2.reviews
+
+],
+
+backgroundColor:[
+
+"#f59e0b",
+
+"#ef4444"
+
+],
+
+borderRadius:10
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:false
+
+}
+
+}
+
+}
+
+}
+
+);
+// =====================================
+// ANIMATE RESULTS
+// =====================================
+
+results.style.opacity = "0";
+results.style.display = "block";
+
+setTimeout(() => {
+
+    results.style.transition = "all 0.8s ease";
+
+    results.style.opacity = "1";
+
+}, 100);
+
+// =====================================
+// AUTO SCROLL TO RESULTS
+// =====================================
+
+results.scrollIntoView({
+
+    behavior: "smooth",
+
+    block: "start"
+
+});
+
+// =====================================
+// SUCCESS MESSAGE
+// =====================================
+
+console.log("✅ Comparison Loaded Successfully");
+
+}
+
+// =====================================
+// ERROR HANDLING
+// =====================================
+
+catch(error){
+
+console.error(error);
+
+loading.style.display="none";
+
+alert(
+
+"Unable to connect to backend.\n\nPlease ensure the FastAPI server is running."
+
+);
+
+}
+
+// =====================================
+// FINISH
+// =====================================
 
 });
