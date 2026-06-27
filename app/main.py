@@ -1,3 +1,4 @@
+from app.services.playstore import fetch_app_details
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -57,38 +58,19 @@ async def health():
 # -------------------------
 # Compare Apps
 # -------------------------
-
 @app.post("/compare")
 async def compare_apps(data: CompareRequest):
 
-    print("App 1")
+    app1 = fetch_app_details(data.app1_url)
 
-    print(data.app1_url)
-
-    print("App 2")
-
-    print(data.app2_url)
+    app2 = fetch_app_details(data.app2_url)
 
     return {
 
         "status": "success",
 
-        "message": "Backend Connected Successfully",
+        "app1": app1,
 
-        "app1": {
-
-            "name": "Spotify",
-
-            "sentiment": 82
-
-        },
-
-        "app2": {
-
-            "name": "Apple Music",
-
-            "sentiment": 74
-
-        }
+        "app2": app2
 
     }
