@@ -1,50 +1,55 @@
-from app.services.playstore import fetch_app_details
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from fastapi import Request
-from pydantic import BaseModel
+
+# Import Router
+from app.api.compare import router as compare_router
+
+# -------------------------
+# FastAPI App
+# -------------------------
 
 app = FastAPI(
     title="ProductPulse AI",
-    version="1.0"
+    version="1.0.0",
+    description="LLM Powered Product Intelligence Platform"
 )
 
+# -------------------------
 # Static Files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# -------------------------
 
+app.mount(
+    "/static",
+    StaticFiles(directory="app/static"),
+    name="static"
+)
+
+# -------------------------
 # Templates
-templates = Jinja2Templates(directory="app/templates")
-
-
-# -------------------------
-# Request Model
 # -------------------------
 
-class CompareRequest(BaseModel):
-
-    app1_url: str
-
-    app2_url: str
-
+templates = Jinja2Templates(
+    directory="app/templates"
+)
 
 # -------------------------
-# Home
+# Home Page
 # -------------------------
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
 
     return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={}
+        "index.html",
+        {
+            "request": request
+        }
     )
 
-
 # -------------------------
-# Health
+# Health Check
 # -------------------------
 
 @app.get("/health")
@@ -54,23 +59,8 @@ async def health():
         "status": "Backend Running"
     }
 
-
 # -------------------------
-# Compare Apps
+# Register API Router
 # -------------------------
-@app.post("/compare")
-async def compare_apps(data: CompareRequest):
 
-    app1 = fetch_app_details(data.app1_url)
-
-    app2 = fetch_app_details(data.app2_url)
-
-    return {
-
-        "status": "success",
-
-        "app1": app1,
-
-        "app2": app2
-
-    }
+app.include_router(compare_router)
